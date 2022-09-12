@@ -77,7 +77,7 @@ def compute_g_and_d(df_corr, block_size):
     df_corr_mini = df_corr.loc[df_corr['AbsShift'] <= block_size]
     df_corr_mini['Lambda'] = df_corr_mini['Shift'].apply(lambda x: trap_function(x, total_distance = block_size))
     df_corr_mini['LambdaG'] = np.multiply(df_corr_mini['Lambda'], df_corr_mini['AbsShift'])
-    print(df_corr_mini.head())
+    #print(df_corr_mini.head())
     return [np.dot(df_corr_mini['LambdaG'], df_corr_mini['BaseCov']),
             (4/3)*np.dot(df_corr_mini['Lambda'], df_corr_mini['BaseCov'])**2]
 

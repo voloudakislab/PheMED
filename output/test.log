@@ -1,13 +1,20 @@
-2022-09-11 22:11:52,646~INFO~Running PheMED
-2022-09-11 22:11:52,646~INFO~ phemed.py --out_file output/test
+2022-09-12 11:37:26,094~INFO~Running PheMED
+2022-09-12 11:37:26,094~INFO~ phemed.py --out_file output/test
                              --sum_stats data/sim_data.csv
                              --n_studies 2
                              --snp_list data/random_EUR_AFR.clumped
                              --merge_snps False
+                             --seed 18
+                             --compute_cis True
+                             --n_CIs 100
 
-2022-09-11 22:11:52,975~INFO~Number of rows in summary stats: 5000
-2022-09-11 22:11:52,975~INFO~Number of valid SNPs in summary stats: 5000
-2022-09-11 22:11:52,975~WARNING~Number of valid SNPs in summary stats appears low
-2022-09-11 22:11:53,207~INFO~PheMED Optimization terminated successfully.
-2022-09-11 22:11:53,207~INFO~Effective dilution values are : [1.0, 1.9298]
-2022-09-11 22:11:53,207~INFO~Analysis finished
+2022-09-12 11:37:26,457~INFO~Number of rows in summary stats: 5000
+2022-09-12 11:37:26,457~INFO~Number of valid SNPs in summary stats: 5000
+2022-09-12 11:37:26,458~WARNING~Number of valid SNPs in summary stats appears low
+2022-09-12 11:37:26,722~INFO~PheMED Optimization terminated successfully.
+2022-09-12 11:37:26,722~INFO~Effective dilution values are : [1.0, 1.9298]
+2022-09-12 11:37:26,732~INFO~Note: NumExpr detected 12 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+2022-09-12 11:37:26,732~INFO~NumExpr defaulting to 8 threads.
+2022-09-12 11:37:32,529~INFO~Computing confidence intervals
+2022-09-12 11:37:57,665~INFO~Saving confidence intervals
+2022-09-12 11:37:57,666~INFO~Analysis finished
