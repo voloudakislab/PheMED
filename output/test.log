@@ -1,0 +1,13 @@
+2022-09-11 22:11:52,646~INFO~Running PheMED
+2022-09-11 22:11:52,646~INFO~ phemed.py --out_file output/test
+                             --sum_stats data/sim_data.csv
+                             --n_studies 2
+                             --snp_list data/random_EUR_AFR.clumped
+                             --merge_snps False
+
+2022-09-11 22:11:52,975~INFO~Number of rows in summary stats: 5000
+2022-09-11 22:11:52,975~INFO~Number of valid SNPs in summary stats: 5000
+2022-09-11 22:11:52,975~WARNING~Number of valid SNPs in summary stats appears low
+2022-09-11 22:11:53,207~INFO~PheMED Optimization terminated successfully.
+2022-09-11 22:11:53,207~INFO~Effective dilution values are : [1.0, 1.9298]
+2022-09-11 22:11:53,207~INFO~Analysis finished
