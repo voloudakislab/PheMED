@@ -58,3 +58,45 @@ def compute_meta_scores(betas, ses, alpha, norm_alpha = True):
 def compute_meta_scores_mean(betas, ses, alpha, norm_alpha = True):
     meta = compute_meta_scores(betas, ses, alpha, norm_alpha = norm_alpha)
     return np.mean(np.abs(meta))
+
+def nll_data_sample_overlap(betas,ses,alpha, covar_matrix_params, uniquenenss = True):
+    #assumes independence, but we can generalize
+    #print(alpha)
+    if uniqueness:
+        alpha[0] = 1
+    ses = np.array(ses)
+    #keep definition of alpha consistent with other function
+    alpha = np.power(alpha, -1)
+    betas = np.array(betas)
+    #first compute sigma inverse
+    #reshape into n x n matrix
+    covar_matrix = np.array(covar_matrix_params).reshape((betas.shape[1],betas.shape[1]))
+    np.fill_diagonal(covar_matrix, 1)
+    #symmetrize covar_matrix
+    covar_matrix = .5*(covar_matrix + covar_matrix.transpose())
+    covar_matrix[covar_matrix > 1] = .95
+    covar_matrix[covar_matrix < -1] = -.95
+    #print(covar_matrix)
+    alpha = np.abs(np.array(alpha))
+    alpha[alpha < .01] = .01
+    alpha[alpha > 100] = 100
+
+    #compute covar matrix for each SNP
+    covar_matrix_list = np.zeros((betas.shape[0], betas.shape[1], betas.shape[1]))
+    meta_means = np.zeros(betas.shape[0])
+    nll = 0
+    covar_matrix_inv = np.linalg.inv(covar_matrix)
+    inv_ses = np.power(ses, -1)
+    covar_matrix_inv_full = np.repeat(covar_matrix_inv.reshape(1,betas.shape[1],betas.shape[1]),
+                                      betas.shape[0], axis = 0)
+
+
+    covar_matrix_total = np.einsum('ij,ijk,ik -> ijk',inv_ses, covar_matrix_inv_full,inv_ses)
+    meta_means = np.einsum('j,ijk,ik -> i', alpha, covar_matrix_total, betas)
+    meta_means_den = np.einsum('j,ijk,k -> i', alpha, covar_matrix_total, alpha)
+    meta_means = np.divide(meta_means, meta_means_den)
+    delta_beta = betas - np.einsum('j,i -> ij', alpha, meta_means) #alpha @ meta_means
+    nll = .5*np.einsum('ij,ijk,ik -> i', delta_beta, covar_matrix_total, delta_beta).sum()
+    nll += .5*betas.shape[0]*np.log(np.linalg.det(covar_matrix_inv))
+
+    return nll
