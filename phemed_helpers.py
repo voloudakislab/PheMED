@@ -97,6 +97,6 @@ def nll_data_sample_overlap(betas,ses,alpha, covar_matrix_params, uniquenenss = 
     meta_means = np.divide(meta_means, meta_means_den)
     delta_beta = betas - np.einsum('j,i -> ij', alpha, meta_means) #alpha @ meta_means
     nll = .5*np.einsum('ij,ijk,ik -> i', delta_beta, covar_matrix_total, delta_beta).sum()
-    nll += .5*betas.shape[0]*np.log(np.linalg.det(covar_matrix_inv))
+    nll += .5*betas.shape[0]*np.log(np.linalg.det(covar_matrix))
 
     return nll
