@@ -146,8 +146,9 @@ if __name__ == '__main__':
                 df_results_sim.loc[i] = [i] + list(optimizer.x[1:n_studies]) +  [optimizer.message]
 
             df_ci = pd.DataFrame(df_results_sim.quantile([.025,.50,.975]))
+            df_ci = df_ci.reset_index().rename(columns = {'index':'quantile'})
             logger.info("Saving confidence intervals")
-            df_ci.to_csv(out_file + '_CIs.csv', index = True)
+            df_ci.to_csv(out_file + '_CIs.csv', index = False)
 
 
     #compute P-values
