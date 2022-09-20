@@ -27,6 +27,6 @@ For additional arguments run
 python phemed.py -h
 ```
 
-__FAQ__: For FAQ and troubleshooting, please see the [FAQ here](https://www.github.com/voloudakislab/phemed/faq)
+__FAQ__: For FAQ and troubleshooting, please see the [FAQ here](https://github.com/voloudakislab/phemed/tree/main/faq)
 
 __Citing our Paper__: TBA.  
