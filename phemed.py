@@ -12,6 +12,7 @@ from scipy.optimize import minimize
 import argparse
 import logging
 import bootstrap as boots
+from numpy.random import Philox, Generator
 
 #assumes betas and ses are last columns of df
 #ID cols ... Beta Cols ... SE Cols
@@ -48,6 +49,7 @@ parser.add_argument("--optimizer_method", type = str, default = "Nelder-Mead",
             help = "Algorithm for optimization, see scipy.minimize for valid choices")
 
 if __name__ == '__main__':
+
     args = parser.parse_args()
     stats_path = args.sum_stats
     snp_path = args.snp_list
@@ -59,13 +61,17 @@ if __name__ == '__main__':
     n_trials = args.n_CIs
     max_iters = args.max_iters
     optimizer_method = args.optimizer_method
+    key = 2**96 + 2**33 + 2**17 + 2**9
+    rng = Generator(Philox(key = key + seed))
     logging.basicConfig(filename= out_file + ".log",
                     format='%(asctime)s~%(levelname)s~%(message)s',
                     filemode='w')
 
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.NOTSET) #lowest level, DEBUG
     logger.info("Running PheMED")
+    #np.seterrcall(logger)
+    np.seterr(all='warn')
     command_string = """ phemed.py --out_file {out_file}
                              --sum_stats {sum_stats}
                              --n_studies {n_studies}
@@ -132,12 +138,12 @@ if __name__ == '__main__':
             block_size_list.append(1)
             final_block_size = np.max(block_size_list)
 
-            np.random.seed(seed)
+            #np.random.seed(seed)
             columns = ['Sample'] + ['PheMed_' + str(i + 1) for i in range(n_studies) if i != 0] + ['Convergence']
             df_results_sim = pd.DataFrame(columns = columns)
             logger.info("Computing confidence intervals")
             for i in range(n_trials):
-                df_results_sample = boots.circular_block_bootstrap(df_stats,final_block_size)
+                df_results_sample = boots.circular_block_bootstrap(rng, df_stats,final_block_size)
     #df_meta_sample = df_meta.sample(n = df_meta.shape[0], replace = True)
                 betas = df_results_sample[beta_vars]
                 ses = df_results_sample[se_vars]
@@ -180,9 +186,9 @@ if __name__ == '__main__':
                     p_evt = np.nan
                 elif not fit_found:
                     valid_test = 'Failed to optimize fit'
-                    p_evt = boots.compute_evt_p(df_sim_mini, top_n, a, k, n_sim = int(1e4))
+                    p_evt = boots.compute_evt_p(rng, df_sim_mini, top_n, a, k, n_sim = int(1e4))
                 else:
-                    p_evt = boots.compute_evt_p(df_sim_mini, top_n, a, k, n_sim = int(1e4))
+                    p_evt = boots.compute_evt_p(rng, df_sim_mini, top_n, a, k, n_sim = int(1e4))
 
                 df_pvalue.loc[index] = [var, p_evt, 'Extreme Value Theory', valid_test]
                 index += 1

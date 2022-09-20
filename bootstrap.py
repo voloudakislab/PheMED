@@ -11,7 +11,7 @@ from scipy.stats import norm
 from scipy.stats import normaltest
 from scipy.stats import shapiro
 from scipy.stats import anderson
-
+#p.seterr(all='warn')
 
 def df_row_shift(df,start_index):
     if start_index > 0:
@@ -76,7 +76,7 @@ def trap_function(x, total_distance = 10):
 
 def compute_g_and_d(df_corr, block_size):
     df_corr['AbsShift'] = np.abs(df_corr['Shift'])
-    df_corr_mini = df_corr.loc[df_corr['AbsShift'] <= block_size]
+    df_corr_mini = df_corr.loc[df_corr['AbsShift'] <= block_size].copy() #fixes loc issue
     df_corr_mini['Lambda'] = df_corr_mini['Shift'].apply(lambda x: trap_function(x, total_distance = block_size))
     df_corr_mini['LambdaG'] = np.multiply(df_corr_mini['Lambda'], df_corr_mini['AbsShift'])
     #print(df_corr_mini.head())
@@ -86,11 +86,11 @@ def compute_g_and_d(df_corr, block_size):
 def compute_final_block_size(df_meta, g, d):
     return int(np.ceil((df_meta.shape[0]*2*(g**2)/d)**(1/3)))
 
-def circular_block_bootstrap(df, block_size):
+def circular_block_bootstrap(rng,df, block_size):
     #find how many blocks we are grabbing
     n_samples = int(np.floor(df.shape[0]/block_size))
     #compute starting point of blocks
-    rand_rows = np.random.randint(df.shape[0], size = (n_samples,1))
+    rand_rows = rng.integers(df.shape[0], size = (n_samples,1))
     #compute entire block explicitly
     selected_rows = rand_rows + np.multiply(np.ones((n_samples,block_size)), np.arange(0,block_size))
     #keep things in mod arithmetic
@@ -119,7 +119,7 @@ def norm_alpha(df):
 def compute_normal_p(data):
     mean = data['Alpha'].mean()
     sd = data['Alpha'].std()
-    print(mean, sd)
+    #print(mean, sd)
     z = (1 - mean)/sd
     return 2*(1 - norm.cdf(z))
 
@@ -238,10 +238,10 @@ def fit_gpd(df, initial_vals = np.array([.2,.01])):
             top_n = top_n - 10
     return top_n, k, a, alpha_vals, base_alpha, fit_found
 
-def compute_evt_p(df, n_tail, a, k, n_sim = int(1e4)):
+def compute_evt_p(rng, df, n_tail, a, k, n_sim = int(1e4)):
     covar_matrix = compute_covar(a,k,n_tail)
-    print(a, k, covar_matrix, n_sim)
-    sim_vars = np.random.multivariate_normal([a,k], compute_covar(a,k,n_tail), size = n_sim)
+    #print(a, k, covar_matrix, n_sim)
+    sim_vars = rng.multivariate_normal([a,k], compute_covar(a,k,n_tail), size = n_sim)
     p_sims = np.zeros(n_sim)
     for i in range(n_sim):
         p_sims[i] = 2*(n_tail/df.shape[0])*gpd_tail_p(1, sim_vars[i,1], sim_vars[i,0])
