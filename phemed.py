@@ -66,12 +66,12 @@ if __name__ == '__main__':
     logging.basicConfig(filename= out_file + ".log",
                     format='%(asctime)s~%(levelname)s~%(message)s',
                     filemode='w')
-
+    logging.captureWarnings(True)
     logger = logging.getLogger()
-    logger.setLevel(logging.NOTSET) #lowest level, DEBUG
+    logger.setLevel(logging.DEBUG) #lowest level, DEBUG, NOTSET
     logger.info("Running PheMED")
     #np.seterrcall(logger)
-    np.seterr(all='warn')
+    #np.seterr(all='warn')
     command_string = """ phemed.py --out_file {out_file}
                              --sum_stats {sum_stats}
                              --n_studies {n_studies}
