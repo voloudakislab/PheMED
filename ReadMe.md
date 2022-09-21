@@ -23,7 +23,7 @@ __P Values__: For the p-value file, results are printed in tidy format, where we
 Nevertheless, for naive count, if the p-value does not pass the QC check (e.g. the p-value is very small and becomes hard to estimate from the bootstrap simulation), if the number of bootstrap samples is sufficiently large (e.g. = 2000, the default), we can still use the confidence intervals to infer if p < .05.  See our paper for details.  
 
 __Brief Overview of Other Arguments__
-Computing the CIs when measuring the effective dilution between two GWA studies can take around an hour.  If you would like to run the pipeline without computing the CIs, use ```--compute_cis False ``` or the ```--n_CIs <smaller integer>``` to reduce the number of bootstrap samples.
+Computing the CIs when measuring the effective dilution between two GWA studies can take around an hour.  If you would like to run the pipeline without computing the CIs, use ```--compute_cis False ``` or the ```--n_CIs <smaller integer>``` to reduce the number of bootstrap samples; however decreasing the number of samples below the default value can result in noisy p-values.
 
 For additional arguments run
 ```

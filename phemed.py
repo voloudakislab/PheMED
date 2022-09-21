@@ -47,7 +47,8 @@ parser.add_argument("--max_iters", type = int, default = 300,
             help = "Maximum iterations for optimization")
 parser.add_argument("--optimizer_method", type = str, default = "Nelder-Mead",
             help = "Algorithm for optimization, see scipy.minimize for valid choices")
-
+parser.add_argument("--bruteforce_start", type = boolean_string, default = True,
+            help = "Use bruteforce to choose initial guess for MLE for estimating p-values using extreme value theory")
 if __name__ == '__main__':
 
     args = parser.parse_args()
@@ -60,6 +61,7 @@ if __name__ == '__main__':
     seed = args.seed
     n_trials = args.n_CIs
     max_iters = args.max_iters
+    bruteforce = args.bruteforce_start
     optimizer_method = args.optimizer_method
     key = 2**96 + 2**33 + 2**17 + 2**9
     rng = Generator(Philox(key = key + seed))
@@ -126,6 +128,8 @@ if __name__ == '__main__':
         logger.info("Effective dilution values are : " + str(list(np.round(optimizer.x, 4))))
 
         if compute_cis:
+            if n_trials < 1000:
+                logger.warning("Number of Bootstrap Samples appears small.  This can result in noisy CI and p-value outputs.")
             df_stats = df_stats.sort_values(by = ['CHR','POS']).reset_index(drop = True)
         #compute block size
             block_size_list = []
@@ -179,7 +183,7 @@ if __name__ == '__main__':
                 index += 1
 
                 #Extreme Value Theory
-                top_n, k, a, alpha_vals, base_alpha, fit_found = boots.fit_gpd(df_sim_mini)
+                top_n, k, a, alpha_vals, base_alpha, fit_found = boots.fit_gpd(df_sim_mini, bruteforce_initializer = bruteforce)
                 valid_test = True
                 if p_naive > top_n/df_sim_mini.shape[0]:
                     valid_test = 'P-Value is not an Extreme Value'

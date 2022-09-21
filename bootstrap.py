@@ -218,7 +218,7 @@ def grab_threshold(k):
         return 1.321
 
 
-def fit_gpd(df, initial_vals = np.array([.2,.01])):
+def fit_gpd(df, initial_vals = np.array([.2,.01]), bruteforce_initializer = True):
     fit_found = False
     top_n = 250
 
@@ -226,6 +226,8 @@ def fit_gpd(df, initial_vals = np.array([.2,.01])):
     while fit_found == False and top_n > 20:
         #print(top_n)
         alpha_vals, base_alpha = grab_top_values(df, top_n = np.min([top_n,df.shape[0] - 1]))
+        if bruteforce_initializer:
+            initial_vals = get_starting_vals(alpha_vals)
         opt = minimize(lambda x: -1*compute_full_mle(alpha_vals, x), initial_vals,
                             method = 'Nelder-Mead', options = {'maxiter':10000})
         k = opt.x[0]
@@ -249,10 +251,54 @@ def compute_evt_p(rng, logger, df, n_tail, a, k, n_sim = int(1e4)):
     if min_eval < 0:
         logger.warning("Minimum Eigenvalue in Covariance Matrix is negative and equals {eval}".format(eval = np.round(min_eval,5)))
     else:
-        logger.info("Minimum Eigenvalue in Covariance Matrix is {eval} and looks reasonanble".format(eval = np.round(min_eval,5)))
+        logger.info("Minimum Eigenvalue in Covariance Matrix is {eval} and looks reasonable".format(eval = np.round(min_eval,5)))
     #print(a, k, covar_matrix, n_sim)
     sim_vars = rng.multivariate_normal([a,k], covar_matrix, size = n_sim)
     p_sims = np.zeros(n_sim)
     for i in range(n_sim):
         p_sims[i] = 2*(n_tail/df.shape[0])*gpd_tail_p(1, sim_vars[i,1], sim_vars[i,0])
     return np.mean(p_sims), min_eval
+
+#brute force functions
+def compute_profile_mle(alpha_vals, theta):
+    n = alpha_vals.shape[0]
+    theta = np.min([theta, 1/alpha_vals.max()])
+    mle = -n -1*np.log(1 - theta*alpha_vals).sum() - n*np.log(-((n*theta)**-1)*(np.log(1 - theta*alpha_vals).sum()))
+    return mle
+
+def grab_params_from_theta(alpha_vals, theta):
+    n = alpha_vals.shape[0]
+    k = (-1/n)*np.log(1-theta*alpha_vals).sum()
+    a = k/theta
+    return k, a
+
+def extract_theta_bounds(alpha_vals):
+    eps = 1e-6/np.mean(alpha_vals)
+    upper = np.max(alpha_vals)**-1 - eps
+    lower = -1*2*np.mean(alpha_vals)/alpha_vals[len(alpha_vals) - 2]
+    return lower, upper, eps
+
+def plot_positive_theta(alpha_vals, n_steps = 1000):
+    df_plot = pd.DataFrame(columns = ['Theta','ProfileMLE'])
+    _, upper, eps = extract_theta_bounds(alpha_vals)
+    for i, x in enumerate(np.linspace(eps, upper, n_steps)):
+        mle = compute_profile_mle(alpha_vals, x)
+        df_plot.loc[i] = [x, mle]
+    return df_plot
+
+def plot_negative_theta(alpha_vals, n_steps = 1000):
+    df_plot = pd.DataFrame(columns = ['Theta','ProfileMLE'])
+    lower, _, eps = extract_theta_bounds(alpha_vals)
+    for i, x in enumerate(np.linspace(lower, -1*eps, n_steps)):
+        mle = compute_profile_mle(alpha_vals, x)
+        df_plot.loc[i] = [x, mle]
+    return df_plot
+
+def get_starting_vals(alpha_vals):
+    df_neg = plot_negative_theta(alpha_vals)
+    df_pos = plot_positive_theta(alpha_vals)
+    df_total = pd.concat([df_pos, df_neg])
+    theta_star = df_total.loc[df_total['ProfileMLE'] == df_total['ProfileMLE'].max()]
+    theta_star = theta_star['Theta'].values[0]
+    k,a = grab_params_from_theta(alpha_vals, theta_star)
+    return np.array([k,a])
