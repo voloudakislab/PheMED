@@ -157,6 +157,10 @@ def grab_top_values(df_results, top_n = 250):
 def compute_covar(a, k, n):
     return ((1-k)/n)*np.array([[2*(a**2), a],[a,(1 - k)]])
 
+#grab minimum eigenvalue
+def grab_min_eval(matrix):
+    return np.min(np.linalg.eigvalsh(matrix))
+
 def gpd_tail_p(x,k,a):
     term = k*x/a
     if term > 1:
@@ -238,11 +242,17 @@ def fit_gpd(df, initial_vals = np.array([.2,.01])):
             top_n = top_n - 10
     return top_n, k, a, alpha_vals, base_alpha, fit_found
 
-def compute_evt_p(rng, df, n_tail, a, k, n_sim = int(1e4)):
+def compute_evt_p(rng, logger, df, n_tail, a, k, n_sim = int(1e4)):
     covar_matrix = compute_covar(a,k,n_tail)
+    min_eval = grab_min_eval(covar_matrix)
+    logger.info("Using Extreme Value Theory")
+    if min_eval < 0:
+        logger.warning("Minimum Eigenvalue in Covariance Matrix is negative and equals {eval}".format(eval = np.round(min_eval,5)))
+    else:
+        logger.info("Minimum Eigenvalue in Covariance Matrix is {eval} and looks reasonanble".format(eval = np.round(min_eval,5)))
     #print(a, k, covar_matrix, n_sim)
-    sim_vars = rng.multivariate_normal([a,k], compute_covar(a,k,n_tail), size = n_sim)
+    sim_vars = rng.multivariate_normal([a,k], covar_matrix, size = n_sim)
     p_sims = np.zeros(n_sim)
     for i in range(n_sim):
         p_sims[i] = 2*(n_tail/df.shape[0])*gpd_tail_p(1, sim_vars[i,1], sim_vars[i,0])
-    return np.mean(p_sims)
+    return np.mean(p_sims), min_eval

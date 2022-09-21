@@ -186,10 +186,12 @@ if __name__ == '__main__':
                     p_evt = np.nan
                 elif not fit_found:
                     valid_test = 'Failed to optimize fit'
-                    p_evt = boots.compute_evt_p(rng, df_sim_mini, top_n, a, k, n_sim = int(1e4))
+                    p_evt, min_eval = boots.compute_evt_p(rng, logger, df_sim_mini, top_n, a, k, n_sim = int(1e4))
                 else:
-                    p_evt = boots.compute_evt_p(rng, df_sim_mini, top_n, a, k, n_sim = int(1e4))
+                    p_evt, min_eval = boots.compute_evt_p(rng, logger, df_sim_mini, top_n, a, k, n_sim = int(1e4))
 
+                if min_eval < 0:
+                    valid_test += " Covariance matrix not positive definite, check logs"
                 df_pvalue.loc[index] = [var, p_evt, 'Extreme Value Theory', valid_test]
                 index += 1
                 #export pvalues
