@@ -77,7 +77,7 @@ if __name__ == '__main__':
     logger.info("Running PheMED")
     #np.seterrcall(logger)
     #np.seterr(all='warn')
-    command_string = """ phemed.py --out_file {out_file}
+    command_string = """ phemed.py --out {out_file}
                              --sum_stats {sum_stats}
                              --n_studies {n_studies}
                              --snp_list {snp_list}
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     #dilution values
         optimizer.x[0] = 1
         logger.info("Effective dilution values are : " + str(list(np.round(optimizer.x, 4))))
-        if min(optimizer) < .2 or max(optimizer) > 5:
+        if min(optimizer.x) < .2 or max(optimizer.x) > 5:
             logger.warning("Extreme dilution values detected.  Confirm that effect alleles are aligned across studies.")
         if compute_cis:
             if n_trials < 1000:
@@ -142,7 +142,8 @@ if __name__ == '__main__':
                 corr_stats = boots.compute_autocorr(df_stats, beta_var, shift_range = shift_range)
                 block = boots.compute_block_size(corr_stats, df_stats)
                 if block >= shift_range:
-                    logger.warning("Initial block size provided is too small for convergence.  Consider rerunning with a larger block size with the block_window_initialize option.")
+                    logger.warning("""Initial block size provided is too small for convergence.  
+                    Consider rerunning with a larger block size with the block_window_initialize option.""")
                 g, d = boots.compute_g_and_d(corr_stats, 2*block)
                 beta_block_size = boots.compute_final_block_size(df_stats, g, d)
                 block_size_list.append(beta_block_size)
