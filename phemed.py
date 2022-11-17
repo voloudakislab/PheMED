@@ -47,6 +47,8 @@ parser.add_argument("--max_iters", type = int, default = 300,
             help = "Maximum iterations for optimization")
 parser.add_argument("--optimizer_method", type = str, default = "Nelder-Mead",
             help = "Algorithm for optimization, see scipy.minimize for valid choices")
+parser.add_argument("--block_window_initialize", type = int, default = 2000,
+                        help = "Default value for finding block size for blocked bootstrap")
 parser.add_argument("--bruteforce_start", type = boolean_string, default = True,
             help = "Use bruteforce to choose initial guess for MLE for estimating p-values using extreme value theory")
 if __name__ == '__main__':
@@ -63,6 +65,7 @@ if __name__ == '__main__':
     max_iters = args.max_iters
     bruteforce = args.bruteforce_start
     optimizer_method = args.optimizer_method
+    shift_range = args.block_window_initialize
     key = 2**96 + 2**33 + 2**17 + 2**9
     rng = Generator(Philox(key = key + seed))
     logging.basicConfig(filename= out_file + ".log",
@@ -81,10 +84,11 @@ if __name__ == '__main__':
                              --merge_snps {merge_snps}
                              --seed {seed}
                              --compute_cis {compute_cis}
-                             --n_CIs {n_trials}""".format(out_file = out_file,
+                             --n_CIs {n_trials}
+                             --block_window_initialize {block_window}""".format(out_file = out_file,
                              sum_stats = stats_path, n_studies = n_studies,
                             snp_list = snp_path, merge_snps = merge_snps, seed = seed,
-                            compute_cis = compute_cis, n_trials = n_trials)
+                            compute_cis = compute_cis, n_trials = n_trials, block_window = shift_range)
     logger.info(command_string)
     try:
         df_stats = pd.read_csv(stats_path)
@@ -126,7 +130,8 @@ if __name__ == '__main__':
     #dilution values
         optimizer.x[0] = 1
         logger.info("Effective dilution values are : " + str(list(np.round(optimizer.x, 4))))
-
+        if min(optimizer) < .2 or max(optimizer) > 5:
+            logger.warning("Extreme dilution values detected.  Confirm that effect alleles are aligned across studies.")
         if compute_cis:
             if n_trials < 1000:
                 logger.warning("Number of Bootstrap Samples appears small.  This can result in noisy CI and p-value outputs.")
@@ -134,8 +139,10 @@ if __name__ == '__main__':
         #compute block size
             block_size_list = []
             for beta_var in beta_vars:
-                corr_stats = boots.compute_autocorr(df_stats, beta_var, shift_range = 500)
+                corr_stats = boots.compute_autocorr(df_stats, beta_var, shift_range = shift_range)
                 block = boots.compute_block_size(corr_stats, df_stats)
+                if block >= shift_range:
+                    logger.warning("Initial block size provided is too small for convergence.  Consider rerunning with a larger block size with the block_window_initialize option.")
                 g, d = boots.compute_g_and_d(corr_stats, 2*block)
                 beta_block_size = boots.compute_final_block_size(df_stats, g, d)
                 block_size_list.append(beta_block_size)

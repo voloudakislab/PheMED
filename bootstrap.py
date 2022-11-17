@@ -64,6 +64,8 @@ def compute_block_size(df_corr, df_meta):
             solution = 'Found'
         else:
             start_index += 1
+        if start_index >= df_corr_mini.shape[0] + 1:
+            solution = 'Found' #will print out warning
     return start_index
 
 def trap_function(x, total_distance = 10):
