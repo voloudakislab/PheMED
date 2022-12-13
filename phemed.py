@@ -142,7 +142,7 @@ if __name__ == '__main__':
                 corr_stats = boots.compute_autocorr(df_stats, beta_var, shift_range = shift_range)
                 block = boots.compute_block_size(corr_stats, df_stats)
                 if block >= shift_range:
-                    logger.warning("""Initial block size provided is too small for convergence.  
+                    logger.warning("""Initial block size provided is too small for convergence.
                     Consider rerunning with a larger block size with the block_window_initialize option.""")
                 g, d = boots.compute_g_and_d(corr_stats, 2*block)
                 beta_block_size = boots.compute_final_block_size(df_stats, g, d)
@@ -196,6 +196,7 @@ if __name__ == '__main__':
                 if p_naive > top_n/df_sim_mini.shape[0]:
                     valid_test = 'P-Value is not an Extreme Value'
                     p_evt = np.nan
+                    min_eval = 0 #default value to avoid bug
                 elif not fit_found:
                     valid_test = 'Failed to optimize fit'
                     p_evt, min_eval = boots.compute_evt_p(rng, logger, df_sim_mini, top_n, a, k, n_sim = int(1e4))
