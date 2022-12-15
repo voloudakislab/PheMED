@@ -32,6 +32,10 @@ parser.add_argument("--sum_stats", type = str,
             help = "Path to csv containing all summary stats")
 parser.add_argument("--n_studies", type = int,
             help = "Number of studies being analyzed")
+parser.add_argument("--sample_sizes", type = str, default = "None Provided",
+            help = "csv containing cases and controls for each study with columns Cases and Controls for each study")
+parser.add_argument("--eff_sample_sizes", type = str, default = "None Provided",
+            help = "csv containing effective sample sizes for each study, with column N to denote the sample size for each study")
 parser.add_argument("--out", type = str, help = "name of output of PheMED")
 parser.add_argument("--snp_list", type = str, default = "data/random_EUR_AFR.clumped",
 help = "List of approximately independent SNPs to compute effective dilution")
@@ -55,6 +59,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     stats_path = args.sum_stats
+    sample_sizes_path = args.sample_sizes
+    eff_sample_sizes_path = args.eff_sample_sizes
     snp_path = args.snp_list
     n_studies = args.n_studies
     merge_snps = args.merge_snps
@@ -77,16 +83,24 @@ if __name__ == '__main__':
     logger.info("Running PheMED")
     #np.seterrcall(logger)
     #np.seterr(all='warn')
+    sample_size_argument = "--sample_sizes"
+    if sample_sizes_path == "None Provided":
+        sample_size_argument = "--eff_sample_sizes"
+        sample_size_path_to_use =  eff_sample_sizes_path
+    else:
+        sample_size_path_to_use =  sample_sizes_path
     command_string = """ phemed.py --out {out_file}
                              --sum_stats {sum_stats}
                              --n_studies {n_studies}
+                             {sample_size_argument} {sample_size_path_to_use}
                              --snp_list {snp_list}
                              --merge_snps {merge_snps}
                              --seed {seed}
                              --compute_cis {compute_cis}
                              --n_CIs {n_trials}
                              --block_window_initialize {block_window}""".format(out_file = out_file,
-                             sum_stats = stats_path, n_studies = n_studies,
+                             sum_stats = stats_path, n_studies = n_studies, sample_size_argument = sample_size_argument,
+                             sample_size_path_to_use = sample_size_path_to_use,
                             snp_list = snp_path, merge_snps = merge_snps, seed = seed,
                             compute_cis = compute_cis, n_trials = n_trials, block_window = shift_range)
     logger.info(command_string)
@@ -129,7 +143,8 @@ if __name__ == '__main__':
         logger.info("PheMED " + message)
     #dilution values
         optimizer.x[0] = 1
-        logger.info("Effective dilution values are : " + str(list(np.round(optimizer.x, 4))))
+        dilution_vals = np.round(optimizer.x, 4)
+        logger.info("Effective dilution values are : " + str(list(dilution_vals)))
         if min(optimizer.x) < .2 or max(optimizer.x) > 5:
             logger.warning("Extreme dilution values detected.  Confirm that effect alleles are aligned across studies.")
         if compute_cis:
@@ -210,6 +225,26 @@ if __name__ == '__main__':
                 #export pvalues
             logger.info("Saving p-values")
             df_pvalue.to_csv(out_file + '_PVals.csv', index = False)
+
+    #use dilution values to compute effective sample size
+        logger.info("Computing Dilution Adjusted Effective Sample Sizes")
+        if sample_size_path_to_use == "None Provided":
+            logger.info("No sample sizes provided, dilution adjusted sample size could not be computed.")
+
+        else:
+            logger.info("Normalizing Dilution Values so Smallest Dilution Value is 1")
+            dilution_vals_norm = dilution_vals/min(dilution_vals)
+            df_samples = pd.read_csv(sample_size_path_to_use)
+            if sample_size_argument != "--eff_sample_sizes":
+                #compute effective sample sizes
+                df_samples['Den_Eff_N'] = np.divide(1, df_samples['Cases']) + np.divide(1, df_samples['Controls'])
+                df_samples['N'] = np.divide(4, df_samples['Den_Eff_N'])
+
+            df_sample_sizes = df_samples['N'].values
+            logger.info("Unadjusted Effective Sample Sizes are: " + str(list(np.round(df_sample_sizes, 2))))
+            dilution_adj_sample_sizes = np.divide(df_sample_sizes, np.power(dilution_vals_norm,2))
+            dilution_adj_sample_sizes = np.round(dilution_adj_sample_sizes, 2)
+            logger.info("Dilution Adjusted Effective Sample Sizes are: " + str(list(dilution_adj_sample_sizes)))
 
     except Exception as e:
         #ex_type, ex, tb = sys.exc_info()
