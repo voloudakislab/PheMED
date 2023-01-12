@@ -16,7 +16,7 @@ where --sum_stats identifies the csv with the merged log odds ratios and standar
 
 PheMED expects the input csv file to have columns: SNP, CHR, and POS corresponding to the rsid, chromosome and base pair position of the SNP.  
 
-__Understanding Outputs__: By default, PheMED outputs a csv ```<out>_CI.csv``` estimating percentiles 2.5%, 50% and 97.5% for the effective dilution for each study except for the first study in the list.  (e.g. In the CI file, PheMed_2 refers to the effective dilution for the second GWAS study listed in the input file.)  PheMED  also produces a log file ```<out>.log``` and a p-value file ```<out>_PVals.csv```.  For examples of output, see the output directory.   
+__Understanding Outputs__: By default, PheMED outputs a csv ```<out>_CI.csv``` estimating percentiles 2.5%, 50% and 97.5% for the effective dilution for each study except for the first study in the list.  (e.g. In the CI file, PheMed_2 refers to the effective dilution for the second GWAS study listed in the input file.)  PheMED  also produces a log file ```<out>.log```, a p-value file ```<out>_PVals.csv``` and a file containing effective dilution estimates ```<out>_DilutionVals.csv```.  For examples of output, see the output directory.   
 
 __P Values__: For the p-value file, results are printed in tidy format, where we leverage three different p-value methodologies.  For each of the methodologies, there is a PassedQC column that indicates if it is appropriate to use that methodology to compute p-value.  As such, we do not require that all three methodologies pass the QC check; instead, only one such methodology needs to pass the QC check to estimate the p-value.
 
@@ -29,6 +29,15 @@ For additional arguments run
 ```
 python phemed.py -h
 ```
+### Performing Dilution Adjusted Weights (DAW) Meta-Analysis with PheMED
+After running the phemed script above, users can run a dilution adjusted weights meta-analysis with the following command
+```
+python daw_meta.py --sum_stats <path to summary stats file>
+                  --n_studies <number of studies>
+                  --out <prefix for output files>
+                  --dilution_weights <path to DilutionVals csv outputted from the phemed script>
+```
+The script will then output a csv containing meta-analyzed Z-scores, p-values and effect sizes as measured according to the reference study.
 
 __FAQ__: For FAQ and troubleshooting, please see the [FAQ here](https://github.com/voloudakislab/phemed/tree/main/faq)
 
