@@ -143,6 +143,12 @@ if __name__ == '__main__':
         logger.info("PheMED " + message)
     #dilution values
         optimizer.x[0] = 1
+        #Saving Dilution Vals
+        df_dilution = pd.DataFrame(columns = ['StudyId','PheMED'])
+        df_dilution['StudyId'] = np.arange(len(optimizer.x)) + 1
+        df_dilution['PheMED'] = np.array(optimizer.x)
+        df_dilution.to_csv(out_file + '_DilutionVals.csv', index = False)
+
         dilution_vals = np.round(optimizer.x, 4)
         logger.info("Effective dilution values are : " + str(list(dilution_vals)))
         if min(optimizer.x) < .2 or max(optimizer.x) > 5:
