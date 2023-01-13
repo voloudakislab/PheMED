@@ -41,4 +41,6 @@ The script will then output a csv containing meta-analyzed Z-scores, p-values an
 
 __FAQ__: For FAQ and troubleshooting, please see the [FAQ here](https://github.com/voloudakislab/phemed/tree/main/faq)
 
+__Support__: If you have any outstanding questions not addressed by the docs or FAQ, feel free to post your question as a [GitHub Issue here](https://github.com/voloudakislab/PheMED/issues) or send an email to david.burstein2 {at} mssm.edu
+
 __Citing our Paper__: TBA.  
