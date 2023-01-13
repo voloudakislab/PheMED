@@ -47,6 +47,12 @@ python daw_meta.py --sum_stats <path to summary stats file>
                   --dilution_weights <path to DilutionVals csv outputted from the phemed script>
 ```
 The script will then output a csv containing meta-analyzed Z-scores, p-values and effect sizes as measured according to the reference study.
+Example output below: 
+| SNP | CHR | POS | Z_META             | BETA_META            | P_META               |
+|-----|-----|-----|--------------------|----------------------|----------------------|
+| rs1 | 1   | 1   | 2.216573171014446  | 0.04237889772244553  | 0.026652272616020767 |
+| rs2 | 1   | 2   | 2.001733259609271  | 0.03827135065330354  | 0.04531342729038265  |
+| rs3 | 1   | 3   | 0.8086750926075479 | 0.015461144927879799 | 0.41870205861603993  |
 
 __FAQ__: For FAQ and troubleshooting, please see the [FAQ here](https://github.com/voloudakislab/phemed/tree/main/faq)
 
