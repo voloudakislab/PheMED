@@ -23,7 +23,6 @@ For the sum_stats csv, PheMED expects the input csv file to have columns: `SNP`,
 | rs1 | 1   | 1   | 0.069  | 0.010   | 0.040  | 0.044 | 0.01 | 0.027 |
 | rs2 | 1   | 2   | 0.038  | 0.015   | 0.026  | 0.044 | 0.01 | 0.027 |
 | rs3 | 1   | 3   | 0.045  | -0.0004 | 0.022  | 0.044 | 0.01 | 0.027 |
-| rs4 | 1   | 4   | -0.074 | -0.0107 | -0.042 | 0.044 | 0.01 | 0.027 |
 
 __Understanding Outputs__: By default, PheMED outputs a csv ```<out>_CI.csv``` estimating percentiles 2.5%, 50% and 97.5% for the effective dilution for each study except for the first study in the list.  (e.g. In the CI file, PheMed_2 refers to the effective dilution for the second GWAS study listed in the input file.)  PheMED  also produces a log file ```<out>.log```, a p-value file ```<out>_PVals.csv``` and a file containing effective dilution estimates ```<out>_DilutionVals.csv```.  For examples of output, see the output directory.   
 
