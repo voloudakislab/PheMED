@@ -2,7 +2,7 @@
 Phenotypic Measurement of Effective Dilution
 
 ### Dependencies
-After installing [Anaconda](https://store.continuum.io/cshop/anaconda/), running the following commands will create an environment suitable to run PheMED.
+After installing [Anaconda](https://store.continuum.io/cshop/anaconda/) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html), running the following commands will create and activate an environment suitable to run PheMED.
 ```
 conda env create --file environment.yml
 source activate phemed
@@ -12,9 +12,18 @@ To run PheMED on the sample data, run the following command:
 ```
 python phemed.py --sum_stats data/sim_data.csv --n_studies 2 --out output/local_test
 ```
-where --sum_stats identifies the csv with the merged log odds ratios and standard errors for each study.  --n_studies denotes the number of studies being analyzed and --out denotes the name of the output file.  For the sum_stats csv, phemed assumes that when analyzing N studies, the last N columns refer to the standard errors of the respective ordered studies and the N columns preceding those refer to the log odds ratios. Furthermore, the first study listed is used as the reference study when measuring effective dilution. (See the sim_data.csv in the data directory for an example.)
+- `--sum_stats` identifies the csv with the merged log odds ratios and standard errors for each study
+- `--n_studies` denotes the number of studies being analyzed
+- `--out` denotes the name of the output file  
 
-PheMED expects the input csv file to have columns: SNP, CHR, and POS corresponding to the rsid, chromosome and base pair position of the SNP.  
+For the sum_stats csv, PheMED expects the input csv file to have columns: `SNP`, `CHR`, and `POS` corresponding to the rsid, chromosome and base pair position of the SNP. The columns that follow are assumed to contain effect sizes {log(OR)<sub>1</sub>,log(OR)<sub>2</sub>,...,log(OR)<sub>n</sub>} followed by the SEs {SE<sub>1</sub>,SE<sub>2</sub>,...,SE<sub>3</sub>}, when analyzing n studies. Furthermore, the first study listed is used as the reference study when measuring effective dilution. (See the sim_data.csv in the data directory for 2 studies or an example with three studies below.)
+
+| SNP | CHR | POS | STUDY1 | STUDY2  | STUDY3 | SE1   | SE2  | SE3   |
+|-----|-----|-----|--------|---------|--------|-------|------|-------|
+| rs1 | 1   | 1   | 0.069  | 0.010   | 0.040  | 0.044 | 0.01 | 0.027 |
+| rs2 | 1   | 2   | 0.038  | 0.015   | 0.026  | 0.044 | 0.01 | 0.027 |
+| rs3 | 1   | 3   | 0.045  | -0.0004 | 0.022  | 0.044 | 0.01 | 0.027 |
+| rs4 | 1   | 4   | -0.074 | -0.0107 | -0.042 | 0.044 | 0.01 | 0.027 |
 
 __Understanding Outputs__: By default, PheMED outputs a csv ```<out>_CI.csv``` estimating percentiles 2.5%, 50% and 97.5% for the effective dilution for each study except for the first study in the list.  (e.g. In the CI file, PheMed_2 refers to the effective dilution for the second GWAS study listed in the input file.)  PheMED  also produces a log file ```<out>.log```, a p-value file ```<out>_PVals.csv``` and a file containing effective dilution estimates ```<out>_DilutionVals.csv```.  For examples of output, see the output directory.   
 
