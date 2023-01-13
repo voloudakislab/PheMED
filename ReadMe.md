@@ -14,7 +14,7 @@ python phemed.py --sum_stats data/sim_data.csv --n_studies 2 --out output/local_
 ```
 - `--sum_stats` identifies the csv with the merged log odds ratios and standard errors for each study
 - `--n_studies` denotes the number of studies being analyzed
-- `--out` denotes the name of the output file  
+- `--out` denotes prefix for output files
 
 For the sum_stats csv, PheMED expects the input csv file to have columns: `SNP`, `CHR`, and `POS` corresponding to the rsid, chromosome and base pair position of the SNP. The columns that follow are assumed to contain effect sizes {log(OR)<sub>1</sub>,log(OR)<sub>2</sub>,...,log(OR)<sub>n</sub>} followed by the SEs {SE<sub>1</sub>,SE<sub>2</sub>,...,SE<sub>3</sub>}, when analyzing n studies. Furthermore, the first study listed is used as the reference study when measuring effective dilution. (See the sim_data.csv in the data directory for 2 studies or an example with three studies below.)
 
@@ -41,13 +41,19 @@ python phemed.py -h
 ### Performing Dilution Adjusted Weights (DAW) Meta-Analysis with PheMED
 After running the phemed script above, users can run a dilution adjusted weights meta-analysis with the following command
 ```
-python daw_meta.py --sum_stats <path to summary stats file>
-                  --n_studies <number of studies>
-                  --out <prefix for output files>
-                  --dilution_weights <path to DilutionVals csv outputted from the phemed script>
+python daw_meta.py --sum_stats data/sim_data.csv \
+                  --n_studies 2 \
+                  --out output/local_test \
+                  --dilution_weights output/local_test_DilutionVals.csv
 ```
+
+- `--sum_stats` identifies the csv with the merged log odds ratios and standard errors for each study
+- `--n_studies` denotes the number of studies being analyzed
+- `--out` denotes the prefix for output files  
+- `--dilution_weights` path to DilutionVals csv outputted from the phemed script
+
 The script will then output a csv containing meta-analyzed Z-scores, p-values and effect sizes as measured according to the reference study.
-Example output below:
+Example output below (for the 3 studies input):
 
 | SNP | CHR | POS | Z_META             | BETA_META            | P_META               |
 |-----|-----|-----|--------------------|----------------------|----------------------|
