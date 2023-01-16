@@ -33,28 +33,28 @@ parser.add_argument("--sum_stats", type = str,
 parser.add_argument("--n_studies", type = int,
             help = "Number of studies being analyzed")
 parser.add_argument("--sample_sizes", type = str, default = "None Provided",
-            help = "csv containing cases and controls for each study with columns Cases and Controls for each study")
+            help = "csv containing cases and controls for each study with columns Cases and Controls for each study.")
 parser.add_argument("--eff_sample_sizes", type = str, default = "None Provided",
-            help = "csv containing effective sample sizes for each study, with column N to denote the sample size for each study")
+            help = "csv containing effective sample sizes for each study, with column N to denote the sample size for each study.")
 parser.add_argument("--out", type = str, help = "name of output of PheMED")
 parser.add_argument("--snp_list", type = str, default = "data/random_EUR_AFR.clumped",
-help = "List of approximately independent SNPs to compute effective dilution")
+help = "List of approximately independent SNPs to compute effective dilution.  The default value is to used the clumped SNPs in the data subdirectory.")
 parser.add_argument("--merge_snps", type = boolean_string, default = True,
-help = "Only retain SNPs that are approximately independent as defined by snp_list.")
+help = "Only retain SNPs that are approximately independent as defined by snp_list.  The default value is True.")
 parser.add_argument("--compute_cis", type = boolean_string, default = True,
-help = "Compute confidence intervals for estimates.")
+help = "Compute confidence intervals for estimates.  The default value is True.")
 parser.add_argument("--seed", type = int, default = 18,
-            help = "Seed for computing CIs")
+            help = "Seed for computing CIs.  The default value is 18.")
 parser.add_argument("--n_CIs", type = int, default = 2000,
-            help = "Number of bootstrap samples to compute CIs")
+            help = "Number of bootstrap samples to compute CIs.  The default value is 2,000.")
 parser.add_argument("--max_iters", type = int, default = 300,
-            help = "Maximum iterations for optimization")
+            help = "Maximum iterations for optimization.  The default value is 300.")
 parser.add_argument("--optimizer_method", type = str, default = "Nelder-Mead",
-            help = "Algorithm for optimization, see scipy.minimize for valid choices")
+            help = "Algorithm for optimization, see scipy.minimize for valid choices.  The default value is Nelder-Mead.")
 parser.add_argument("--block_window_initialize", type = int, default = 2000,
-                        help = "Default value for finding block size for blocked bootstrap")
+                        help = "Window for finding block size for blocked bootstrap.  The default value is 2,000.")
 parser.add_argument("--bruteforce_start", type = boolean_string, default = True,
-            help = "Use bruteforce to choose initial guess for MLE for estimating p-values using extreme value theory")
+            help = "Use bruteforce to choose initial guess for MLE for estimating p-values using extreme value theory.  The default value is True.")
 if __name__ == '__main__':
 
     args = parser.parse_args()
@@ -81,6 +81,8 @@ if __name__ == '__main__':
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG) #lowest level, DEBUG, NOTSET
     logger.info("Running PheMED")
+    #initialize outputs df
+    df_outputs_summary = pd.DataFrame()
     #np.seterrcall(logger)
     #np.seterr(all='warn')
     sample_size_argument = "--sample_sizes"
@@ -147,7 +149,13 @@ if __name__ == '__main__':
         df_dilution = pd.DataFrame(columns = ['StudyId','PheMED'])
         df_dilution['StudyId'] = np.arange(len(optimizer.x)) + 1
         df_dilution['PheMED'] = np.array(optimizer.x)
-        df_dilution.to_csv(out_file + '_DilutionVals.csv', index = False)
+
+        df_outputs_summary['Study'] = df_dilution['StudyId'].apply(lambda x: 'Study ' + str(x))
+        df_outputs_summary['Reference'] = False
+        df_outputs_summary.loc[0, 'Reference'] = True
+        df_outputs_summary['PheMED'] = df_dilution['PheMED']
+
+        #df_dilution.to_csv(out_file + '_DilutionVals.csv', index = False)
 
         dilution_vals = np.round(optimizer.x, 4)
         logger.info("Effective dilution values are : " + str(list(dilution_vals)))
@@ -172,7 +180,7 @@ if __name__ == '__main__':
             final_block_size = np.max(block_size_list)
 
             #np.random.seed(seed)
-            columns = ['Sample'] + ['PheMed_' + str(i + 1) for i in range(n_studies) if i != 0] + ['Convergence']
+            columns = ['Sample'] + ['Study ' + str(i + 1) for i in range(n_studies) if i != 0] + ['Convergence']
             df_results_sim = pd.DataFrame(columns = columns)
             logger.info("Computing confidence intervals")
             for i in range(n_trials):
@@ -184,19 +192,28 @@ if __name__ == '__main__':
                         options={'maxiter': max_iters}, method = optimizer_method)
                 df_results_sim.loc[i] = [i] + list(optimizer.x[1:n_studies]) +  [optimizer.message]
 
-            df_ci = pd.DataFrame(df_results_sim.quantile([.025,.50,.975]))
+            df_ci = pd.DataFrame(df_results_sim.quantile([.025,.975]))
             df_ci = df_ci.reset_index().rename(columns = {'index':'quantile'})
-            logger.info("Saving confidence intervals")
-            df_ci.to_csv(out_file + '_CIs.csv', index = False)
+            #logger.info("Saving confidence intervals")
+            #df_ci.to_csv(out_file + '_CIs.csv', index = False)
 
 
+            #save CIs to df_outputs_summary
+            df_outputs_summary['CI_.025'] = np.nan
+            df_outputs_summary['CI_.975'] = np.nan
+            for var in df_ci.columns:
+                if var != 'quantile':
+                    low_ci = df_ci[var].values[0]
+                    high_ci = df_ci[var].values[-1]
+                    df_outputs_summary.loc[df_outputs_summary['Study'] == var, 'CI_.025'] = low_ci
+                    df_outputs_summary.loc[df_outputs_summary['Study'] == var, 'CI_.975'] = high_ci
     #compute P-values
 
         index = 0
         if compute_cis:
             logger.info("Computing p-values")
-            phemed_sim_vars = [var for var in df_results_sim.columns if 'PheMed_' in var]
-            df_pvalue = pd.DataFrame(columns = ['PheMedStudy', 'PValue','Method','PassedQC'])
+            phemed_sim_vars = [var for var in df_results_sim.columns if 'Study ' in var]
+            df_pvalue = pd.DataFrame(columns = ['Study', 'PValue','Method','PassedQC'])
             for var in phemed_sim_vars:
                 df_sim_mini = df_results_sim[['Sample',var]].rename(columns = {var:'Alpha'})
                 #naive P-value computation
@@ -229,8 +246,29 @@ if __name__ == '__main__':
                 df_pvalue.loc[index] = [var, p_evt, 'Extreme Value Theory', valid_test]
                 index += 1
                 #export pvalues
-            logger.info("Saving p-values")
-            df_pvalue.to_csv(out_file + '_PVals.csv', index = False)
+            #logger.info("Saving p-values")
+            #df_pvalue.to_csv(out_file + '_PVals.csv', index = False)
+            #save df_pvalue to df_outputs_summary
+
+            #get largest P-value that passes QC.
+            df_top_p = df_pvalue.loc[df_pvalue['PassedQC'] == True].groupby('Study')[['PValue']].max().reset_index().rename(columns = {'index': 'Study'})
+            df_outputs_summary['P'] = np.nan
+            for study in df_top_p['Study'].unique():
+                p_value_temp = df_top_p.loc[(df_top_p['Study'] == study), 'PValue'].values[0]
+                df_outputs_summary.loc[df_outputs_summary['Study'] == study, 'P'] = p_value_temp
+
+            for method in df_pvalue['Method'].unique():
+                df_outputs_summary[method] = np.nan
+                df_outputs_summary[method + '_qc'] = True
+                for study in df_pvalue['Study'].unique():
+                    p_value_temp = df_pvalue.loc[(df_pvalue['Study'] == study) & (df_pvalue['Method'] == method), 'PValue'].values[0]
+                    qc_temp = df_pvalue.loc[(df_pvalue['Study'] == study) & (df_pvalue['Method'] == method), 'PassedQC'].values[0]
+                    #print(study, p_value_temp, qc_temp)
+                    df_outputs_summary.loc[df_outputs_summary['Study'] == study, method] = p_value_temp
+                    df_outputs_summary.loc[df_outputs_summary['Study'] == study, method + '_qc'] = qc_temp
+            #get best P-Value
+
+
 
     #use dilution values to compute effective sample size
         logger.info("Computing Dilution Adjusted Effective Sample Sizes")
@@ -251,6 +289,8 @@ if __name__ == '__main__':
             dilution_adj_sample_sizes = np.divide(df_sample_sizes, np.power(dilution_vals_norm,2))
             dilution_adj_sample_sizes = np.round(dilution_adj_sample_sizes, 2)
             logger.info("Dilution Adjusted Effective Sample Sizes are: " + str(list(dilution_adj_sample_sizes)))
+            df_outputs_summary['DilutionAdjNEff'] = dilution_adj_sample_sizes
+        df_outputs_summary.to_csv(out_file + '_Summary.csv', index = False)
 
     except Exception as e:
         #ex_type, ex, tb = sys.exc_info()

@@ -1,0 +1,26 @@
+2023-01-15 23:19:43,921~INFO~Running PheMED
+2023-01-15 23:19:43,927~INFO~ phemed.py --out output/local_testv1
+                             --sum_stats data/sim_data.csv
+                             --n_studies 2
+                             --sample_sizes data/sample_size_sim.csv
+                             --snp_list data/random_EUR_AFR.clumped
+                             --merge_snps True
+                             --seed 18
+                             --compute_cis True
+                             --n_CIs 100
+                             --block_window_initialize 2000
+2023-01-15 23:19:44,277~INFO~Number of rows in summary stats: 5000
+2023-01-15 23:19:44,357~INFO~Number of valid SNPs in summary stats: 113
+2023-01-15 23:19:44,357~WARNING~Number of valid SNPs in summary stats appears low
+2023-01-15 23:19:44,534~INFO~PheMED Optimization terminated successfully.
+2023-01-15 23:19:44,543~INFO~Effective dilution values are : [1.0, 1.9423]
+2023-01-15 23:19:44,543~WARNING~Number of Bootstrap Samples appears small.  This can result in noisy CI and p-value outputs.
+2023-01-15 23:19:58,982~INFO~Computing confidence intervals
+2023-01-15 23:20:10,820~INFO~Computing p-values
+2023-01-15 23:21:17,959~INFO~Using Extreme Value Theory
+2023-01-15 23:21:17,959~INFO~Minimum Eigenvalue in Covariance Matrix is 0.00019 and looks reasonable
+2023-01-15 23:21:18,017~INFO~Computing Dilution Adjusted Effective Sample Sizes
+2023-01-15 23:21:18,017~INFO~Normalizing Dilution Values so Smallest Dilution Value is 1
+2023-01-15 23:21:18,021~INFO~Unadjusted Effective Sample Sizes are: [3600.0, 5000.0]
+2023-01-15 23:21:18,021~INFO~Dilution Adjusted Effective Sample Sizes are: [3600.0, 1325.37]
+2023-01-15 23:21:18,027~INFO~Analysis finished

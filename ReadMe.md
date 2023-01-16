@@ -24,9 +24,9 @@ For the sum_stats csv, PheMED expects the input csv file to have columns: `SNP`,
 | rs2 | 1   | 2   | 0.038  | 0.015   | 0.026  | 0.044 | 0.01 | 0.027 |
 | rs3 | 1   | 3   | 0.045  | -0.0004 | 0.022  | 0.044 | 0.01 | 0.027 |
 
-__Understanding Outputs__: By default, PheMED outputs a csv ```<out>_CI.csv``` estimating percentiles 2.5%, 50% and 97.5% for the effective dilution for each study except for the first study in the list.  (e.g. In the CI file, PheMed_2 refers to the effective dilution for the second GWAS study listed in the input file.)  PheMED  also produces a log file ```<out>.log```, a p-value file ```<out>_PVals.csv``` and a file containing effective dilution estimates ```<out>_DilutionVals.csv```.  For examples of output, see the output directory.   
+__Understanding Outputs__: PheMED produces both a log file and a csv ```<out>_Summary.csv``` with the relevant outputs.  The csv file includes the effective dilution values (in the PheMED column).  If CI's are computed, users can find the bounds of the bootstrapped 95% confidence interval with the columns CI_.025 and CI_.975.  Furthermore, if CI's are computed, ```<out>_Summary.csv``` will also contain p-values for the effective dilution, denoted by the column P (see section P Values below for details).  Finally, if the user provides sample size information for each of the studies, the csv will also produce a column estimating the dilution adjusted effective sample size in the DilutionAdjNEff column. For examples of output, see the output directory.   
 
-__P Values__: For the p-value file, results are printed in tidy format, where we leverage three different p-value methodologies.  For each of the methodologies, there is a PassedQC column that indicates if it is appropriate to use that methodology to compute p-value.  As such, we do not require that all three methodologies pass the QC check; instead, only one such methodology needs to pass the QC check to estimate the p-value.
+__P Values__: For computing the p-value  we leverage three different p-value methodologies.  For each of the methodologies, there is a corresponding qc column that indicates if it is appropriate to use that methodology to compute p-value.  As such, we do not require that all three methodologies pass the QC check; instead, only one such methodology needs to pass the QC check to estimate the p-value.
 
 Nevertheless, for naive count, if the p-value does not pass the QC check (e.g. the p-value is very small and becomes hard to estimate from the bootstrap simulation), if the number of bootstrap samples is sufficiently large (e.g. = 2000, the default), we can still use the confidence intervals to infer if p < .05.  See our paper for details.  
 
@@ -49,7 +49,7 @@ python daw_meta.py --sum_stats data/sim_data.csv \
 - `--sum_stats` identifies the csv with the merged log odds ratios and standard errors for each study
 - `--n_studies` denotes the number of studies being analyzed
 - `--out` denotes the prefix for output files  
-- `--dilution_weights` path to DilutionVals csv outputted from the phemed script
+- `--dilution_weights` path to the summary csv outputted from the phemed script
 
 The script will then output a csv containing meta-analyzed Z-scores, p-values and effect sizes as measured according to the reference study.
 Example output below (for the 3 studies input):
