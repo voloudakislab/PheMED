@@ -15,3 +15,6 @@ For a given list of SNPs, we generate a simulated p-value for each SNP using ind
 
 ### Q5: How are missing values handled?
 If there are missing values (e.g. effect sizes) for some of the studies in the data set, PheMED will impute the effect sizes to be zero with a large value for the standard deviation (e.g. 1000), such that the (meta-analyzed) output will be approximate to the case, where the missing values would be dropped completely from the analysis.
+
+### Q6: How do I run PheMED if I have sample overlap across studies?
+PheMED requires at least one study not overlap with the other studies in the analysis.  In this case, users should run multiple PheMED analyses, such that there is no overlap in any individual analysis.  For example if you want to analyze PheMED on three studies, where Studies 2 and 3 have sample overlap and Study 1 does not have sample overlap, users should run PheMED twice, where one run measures the dilution between Studies 1 and 2, whereas another run measures the dilution between Studies 1 and 3.  See our paper for details.  A future update will help streamline analyses, where studies have sample overlap.  
