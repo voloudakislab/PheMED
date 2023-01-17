@@ -16,7 +16,7 @@ python phemed.py --sum_stats data/sim_data.csv --n_studies 2 --out output/local_
 - `--n_studies` denotes the number of studies being analyzed
 - `--out` denotes prefix for output files
 
-For the sum_stats csv, PheMED expects the input csv file to have columns: `SNP`, `CHR`, and `POS` corresponding to the rsid, chromosome and base pair position of the SNP. The columns that follow are assumed to contain effect sizes {log(OR)<sub>1</sub>,log(OR)<sub>2</sub>,...,log(OR)<sub>n</sub>} followed by the SEs {SE<sub>1</sub>,SE<sub>2</sub>,...,SE<sub>3</sub>}, when analyzing n studies. Furthermore, the first study listed is used as the reference study when measuring effective dilution. (See the sim_data.csv in the data directory for 2 studies or an example with three studies below.)
+For the sum_stats csv, PheMED expects the input csv file to have columns: `SNP`, `CHR`, and `POS` corresponding to the rsid, chromosome and base pair position of the SNP. The columns that follow are assumed to contain effect sizes {log(OR)<sub>1</sub>,log(OR)<sub>2</sub>,...,log(OR)<sub>n</sub>} followed by the SEs {SE<sub>1</sub>,SE<sub>2</sub>,...,SE<sub>n</sub>}, when analyzing n studies. Furthermore, the first study listed is used as the reference study when measuring effective dilution. (See the sim_data.csv in the data directory for 2 studies or an example with three studies below.)
 
 | SNP | CHR | POS | STUDY1 | STUDY2  | STUDY3 | SE1   | SE2  | SE3   |
 |-----|-----|-----|--------|---------|--------|-------|------|-------|
