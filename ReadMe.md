@@ -24,7 +24,7 @@ For the sum_stats csv, PheMED expects the input csv file to have columns: `SNP`,
 | rs2 | 1   | 2   | 0.038  | 0.015   | 0.026  | 0.044 | 0.01 | 0.027 |
 | rs3 | 1   | 3   | 0.045  | -0.0004 | 0.022  | 0.044 | 0.01 | 0.027 |
 
-Currently, PheMED assumes that study samples do not overlap.  For guidance on running PheMED when studies have sample overlap, please see the [FAQ](https://github.com/voloudakislab/phemed/tree/main/faq).  
+Currently, the phemed.py script assumes that study samples do not overlap.  For guidance on running PheMED when studies have sample overlap, please see the [FAQ](https://github.com/voloudakislab/phemed/tree/main/faq).  
 
 __Understanding Outputs__: PheMED produces both a log file and a csv ```<out>_Summary.csv``` with the relevant outputs.  The csv file includes the effective dilution values (in the PheMED column).  If CI's are computed, users can find the bounds of the bootstrapped 95% confidence interval with the columns CI_.025 and CI_.975.  Furthermore, if CI's are computed, ```<out>_Summary.csv``` will also contain p-values for the effective dilution, denoted by the column P (see section P Values below for details).  Finally, if the user provides sample size information for each of the studies, the csv will also produce a column estimating the dilution adjusted effective sample size in the DilutionAdjNEff column. For examples of output, see the output directory.   
 
