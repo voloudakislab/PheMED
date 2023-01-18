@@ -66,4 +66,5 @@ __FAQ__: For FAQ and troubleshooting, please see the [FAQ here](https://github.c
 
 __Support__: If you have any outstanding questions not addressed by the docs or FAQ, feel free to post your question as a [GitHub Issue here](https://github.com/voloudakislab/PheMED/issues) or send an email to david.burstein2 {at} mssm.edu
 
-__Citing our Paper__: TBA.  
+__Citing our Paper__: If you use our software, please cite our preprint on medRxiv:
+[Burstein et al. Detecting and Adjusting for Hidden Biases due to Phenotype Misclassification in Genome-Wide Association Studies](https://doi.org/10.1101/2023.01.17.23284670)  
