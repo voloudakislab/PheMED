@@ -53,6 +53,8 @@ parser.add_argument("--optimizer_method", type = str, default = "Nelder-Mead",
             help = "Algorithm for optimization, see scipy.minimize for valid choices.  The default value is Nelder-Mead.")
 parser.add_argument("--block_window_initialize", type = int, default = 2000,
                         help = "Window for finding block size for blocked bootstrap.  The default value is 2,000.")
+parser.add_argument("--dilution_limit", type = float, default = 10,
+                        help = "Maximum allowed dilution value, must be larger than 1.")
 parser.add_argument("--bruteforce_start", type = boolean_string, default = True,
             help = "Use bruteforce to choose initial guess for MLE for estimating p-values using extreme value theory.  The default value is True.")
 if __name__ == '__main__':
@@ -71,6 +73,7 @@ if __name__ == '__main__':
     max_iters = args.max_iters
     bruteforce = args.bruteforce_start
     optimizer_method = args.optimizer_method
+    dilution_limit = args.dilution_limit
     shift_range = args.block_window_initialize
     key = 2**96 + 2**33 + 2**17 + 2**9
     rng = Generator(Philox(key = key + seed))
@@ -100,11 +103,12 @@ if __name__ == '__main__':
                              --seed {seed}
                              --compute_cis {compute_cis}
                              --n_CIs {n_trials}
+                             --dilution_limit {dilution_limit}
                              --block_window_initialize {block_window}""".format(out_file = out_file,
                              sum_stats = stats_path, n_studies = n_studies, sample_size_argument = sample_size_argument,
                              sample_size_path_to_use = sample_size_path_to_use,
                             snp_list = snp_path, merge_snps = merge_snps, seed = seed,
-                            compute_cis = compute_cis, n_trials = n_trials, block_window = shift_range)
+                            compute_cis = compute_cis, n_trials = n_trials, dilution_limit = dilution_limit, block_window = shift_range)
     logger.info(command_string)
     try:
         df_stats = pd.read_csv(stats_path)
@@ -138,13 +142,19 @@ if __name__ == '__main__':
         betas = df_stats[beta_vars]
         ses = df_stats[se_vars]
 
-        optimizer = minimize(lambda x: phe.nll_data(betas,ses, x), np.ones(n_studies),
+        optimizer = minimize(lambda x: phe.nll_data(betas,ses, x, dilution_limit = dilution_limit), np.ones(n_studies),
                         options={'maxiter': max_iters}, method = optimizer_method)
     #code normalizes first entry to be 1
         message = optimizer.message
         logger.info("PheMED " + message)
     #dilution values
         optimizer.x[0] = 1
+        #test if optimizer values exceed dilution limit
+        if (np.min(optimizer.x) <= 1/dilution_limit) or (np.max(optimizer.x) >= dilution_limit):
+             logger.warning("Very high (or low) values for the effective dilution were found.  Possibly consider different values for the dilution_limit parameter.")
+
+        optimizer.x = np.clip(optimizer.x, 1/dilution_limit, dilution_limit)
+
         #Saving Dilution Vals
         df_dilution = pd.DataFrame(columns = ['StudyId','PheMED'])
         df_dilution['StudyId'] = np.arange(len(optimizer.x)) + 1
@@ -188,7 +198,7 @@ if __name__ == '__main__':
     #df_meta_sample = df_meta.sample(n = df_meta.shape[0], replace = True)
                 betas = df_results_sample[beta_vars]
                 ses = df_results_sample[se_vars]
-                optimizer = minimize(lambda x: phe.nll_data(betas,ses, x), np.ones(n_studies),
+                optimizer = minimize(lambda x: phe.nll_data(betas,ses, x, dilution_limit = dilution_limit), np.ones(n_studies),
                         options={'maxiter': max_iters}, method = optimizer_method)
                 df_results_sim.loc[i] = [i] + list(optimizer.x[1:n_studies]) +  [optimizer.message]
 

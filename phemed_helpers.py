@@ -10,15 +10,15 @@ from scipy.stats import chi2
 
 
 
-def nll_data(betas,ses,alpha, uniqueness = True):
+def nll_data(betas,ses,alpha, uniqueness = True, dilution_limit = 10):
     #assumes independence, but we can generalize
     #print(alpha)
     #alpha[0] = 1
     alpha = np.abs(np.array(alpha))
     if uniqueness:
         alpha[0] = 1
-    alpha[alpha < .01] = .01
-    alpha[alpha > 10] = 10
+    alpha[alpha < 1/dilution_limit] = 1/dilution_limit
+    alpha[alpha > dilution_limit] = dilution_limit
     #compute meta_means
     #print(alpha)
     betas = betas @ np.diag(alpha)
