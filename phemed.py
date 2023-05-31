@@ -43,6 +43,8 @@ parser.add_argument("--merge_snps", type = boolean_string, default = True,
 help = "Only retain SNPs that are approximately independent as defined by snp_list.  The default value is True.")
 parser.add_argument("--compute_cis", type = boolean_string, default = True,
 help = "Compute confidence intervals for estimates.  The default value is True.")
+parser.add_argument("--save_bootstrap_vals", type = boolean_string, default = True,
+help = "Saves bootstrapped PheMED values.  The default value is True.")
 parser.add_argument("--seed", type = int, default = 18,
             help = "Seed for computing CIs.  The default value is 18.")
 parser.add_argument("--n_CIs", type = int, default = 2000,
@@ -67,6 +69,7 @@ if __name__ == '__main__':
     n_studies = args.n_studies
     merge_snps = args.merge_snps
     out_file = args.out
+    save_bootstrap = args.save_bootstrap_vals
     compute_cis = args.compute_cis
     seed = args.seed
     n_trials = args.n_CIs
@@ -125,7 +128,13 @@ if __name__ == '__main__':
         logger.info("Number of rows in summary stats: {n_rows}".format(n_rows = initial_shape))
         if merge_snps:
             df_stats = df_stats.loc[df_stats['SNP'].isin(valid_snps)].reset_index(drop = True)
+        keep_dup_shape = df_stats.shape[0]
+        df_stats = df_stats.drop_duplicates(subset = ['SNP', 'CHR', 'POS'])
         post_merge_shape = df_stats.shape[0]
+        if keep_dup_shape > post_merge_shape:
+                delta = keep_dup_shape - post_merge_shape
+                logger.info("{delta} Duplicated SNP IDs were Removed".format(delta = delta))
+
         logger.info("Number of valid SNPs in summary stats: {n_rows}".format(n_rows = post_merge_shape))
         if post_merge_shape < 1e5:
             logger.warning("Number of valid SNPs in summary stats appears low")
@@ -136,7 +145,13 @@ if __name__ == '__main__':
 
     #addressing nulls
         df_stats[beta_vars] = df_stats[beta_vars].fillna(0)
-        df_stats[se_vars] = df_stats[se_vars].fillna(1000)
+        se_imputed_value = 1000
+        df_stats[se_vars] = df_stats[se_vars].fillna(se_imputed_value)
+        invalid_se_values = (df_stats[se_vars] <= 0).sum().sum()
+        if invalid_se_values > 0:
+            logger.warning("{InvalidCount} non-positive standard error values were found.".format(InvalidCount = invalid_se_values))
+            df_stats[se_vars] = df_stats[se_vars].applymap(lambda x: x if x > 0 else se_imputed_value)
+            #df_stats[se_vars][df_stats[se_vars] <= 0] = se_imputed_value
 
     #later add qc for betas, ses
         betas = df_stats[beta_vars]
@@ -201,6 +216,8 @@ if __name__ == '__main__':
                 optimizer = minimize(lambda x: phe.nll_data(betas,ses, x, dilution_limit = dilution_limit), np.ones(n_studies),
                         options={'maxiter': max_iters}, method = optimizer_method)
                 df_results_sim.loc[i] = [i] + list(optimizer.x[1:n_studies]) +  [optimizer.message]
+            if save_bootstrap:
+                df_results_sim.to_csv(out_file + "_phe_bootstap.csv" , index = False)
 
             df_ci = pd.DataFrame(df_results_sim.quantile([.025,.975]))
             df_ci = df_ci.reset_index().rename(columns = {'index':'quantile'})
@@ -239,22 +256,26 @@ if __name__ == '__main__':
                 index += 1
 
                 #Extreme Value Theory
-                top_n, k, a, alpha_vals, base_alpha, fit_found = boots.fit_gpd(df_sim_mini, bruteforce_initializer = bruteforce)
-                valid_test = True
-                if p_naive > top_n/df_sim_mini.shape[0]:
-                    valid_test = 'P-Value is not an Extreme Value'
-                    p_evt = np.nan
-                    min_eval = 0 #default value to avoid bug
-                elif not fit_found:
-                    valid_test = 'Failed to optimize fit'
-                    p_evt, min_eval = boots.compute_evt_p(rng, logger, df_sim_mini, top_n, a, k, n_sim = int(1e4))
-                else:
-                    p_evt, min_eval = boots.compute_evt_p(rng, logger, df_sim_mini, top_n, a, k, n_sim = int(1e4))
+                try:
+                    top_n, k, a, alpha_vals, base_alpha, fit_found = boots.fit_gpd(df_sim_mini, bruteforce_initializer = bruteforce)
+                    valid_test = True
+                    if p_naive > top_n/df_sim_mini.shape[0]:
+                        valid_test = 'P-Value is not an Extreme Value'
+                        p_evt = np.nan
+                        min_eval = 0 #default value to avoid bug
+                    elif not fit_found:
+                        valid_test = 'Failed to optimize fit'
+                        p_evt, min_eval = boots.compute_evt_p(rng, logger, df_sim_mini, top_n, a, k, n_sim = int(1e4))
+                    else:
+                        p_evt, min_eval = boots.compute_evt_p(rng, logger, df_sim_mini, top_n, a, k, n_sim = int(1e4))
 
-                if min_eval < 0:
-                    valid_test += " Covariance matrix not positive definite, check logs"
-                df_pvalue.loc[index] = [var, p_evt, 'Extreme Value Theory', valid_test]
-                index += 1
+                    if min_eval < 0:
+                        valid_test += " Covariance matrix not positive definite, check logs"
+                    df_pvalue.loc[index] = [var, p_evt, 'Extreme Value Theory', valid_test]
+                    index += 1
+                except Exception as e:
+                        #ex_type, ex, tb = sys.exc_info()
+                    logger.warning("Issue with Computing P-value using Extreme Value Theory: " + str(e))
                 #export pvalues
             #logger.info("Saving p-values")
             #df_pvalue.to_csv(out_file + '_PVals.csv', index = False)
